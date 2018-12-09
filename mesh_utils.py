@@ -2,9 +2,9 @@ import numpy as np
 import trimesh
 
 
-def export_mesh(vertices_gropus, faces_groups, file):
+def export_mesh(vertices_groups, faces_groups, file):
     with open(file, 'w+') as f:
-        for v_group in vertices_gropus:
+        for v_group in vertices_groups:
             v_group.shape = (v_group.size // 3, 3)
             for v in v_group:
                 f.write("v %f %f %f\n" % (v[0], v[1], v[2]))
@@ -13,7 +13,7 @@ def export_mesh(vertices_gropus, faces_groups, file):
             f_group += 1
             for face in f_group:
                 f.write("f %d %d %d\n" % (face[0], face[1], face[2]))
-    show_mesh(file)
+    # show_mesh(file)
 
 
 def show_mesh(file):
@@ -22,7 +22,8 @@ def show_mesh(file):
     #     mesh.visual.face_colors[facet] = trimesh.visual.random_color()
     mesh.show()
 
-def export_local(r, u, v, wall_th, file_name):
+
+def ds_to_mesh(r, u, v, wall_th, file_name):
     rows, cols = u.shape
     cols_helper = np.arange(0, cols, dtype=np.uint32)
     row_helper = np.arange(0, rows, dtype=np.uint32)
@@ -34,9 +35,9 @@ def export_local(r, u, v, wall_th, file_name):
     u_faces = np.zeros([rows, cols, 2, 3], dtype=np.uint32)
 
     # set z
-    r_vertices[:, :, :, 2] = r[:, :, np.newaxis]
-    u_vertices[:, :, :, 2] = u[:, :, np.newaxis]
-    v_vertices[:, :, :, 2] = v[:, :, np.newaxis]
+    r_vertices[:, :, :, 1] = r[:, :, np.newaxis]
+    u_vertices[:, :, :, 1] = u[:, :, np.newaxis]
+    v_vertices[:, :, :, 1] = v[:, :, np.newaxis]
 
     # set x
     r_vertices[:, :, 0, 0] = wall_th + cols_helper[np.newaxis, :-1] * (1 + wall_th)
@@ -55,20 +56,20 @@ def export_local(r, u, v, wall_th, file_name):
     v_vertices[:, :, 3, 0] = r_vertices[:, :, 2, 0]
 
     # set y
-    r_vertices[:, :, 0, 1] = wall_th + row_helper[:, np.newaxis] * (1 + wall_th)
-    r_vertices[:, :, 3, 1] = r_vertices[:, :, 0, 1]
-    r_vertices[:, :, 1, 1] = r_vertices[:, :, 0, 1] + 1
-    r_vertices[:, :, 2, 1] = r_vertices[:, :, 1, 1]
+    r_vertices[:, :, 0, 2] = wall_th + row_helper[:, np.newaxis] * (1 + wall_th)
+    r_vertices[:, :, 3, 2] = r_vertices[:, :, 0, 2]
+    r_vertices[:, :, 1, 2] = r_vertices[:, :, 0, 2] + 1
+    r_vertices[:, :, 2, 2] = r_vertices[:, :, 1, 2]
 
-    u_vertices[:, :, 0, 1] = wall_th + row_helper[:, np.newaxis] * (1 + wall_th)
-    u_vertices[:, :, 3, 1] = u_vertices[:, :, 0, 1]
-    u_vertices[:, :, 1, 1] = u_vertices[:, :, 0, 1] + 1
-    u_vertices[:, :, 2, 1] = u_vertices[:, :, 1, 1]
+    u_vertices[:, :, 0, 2] = wall_th + row_helper[:, np.newaxis] * (1 + wall_th)
+    u_vertices[:, :, 3, 2] = u_vertices[:, :, 0, 2]
+    u_vertices[:, :, 1, 2] = u_vertices[:, :, 0, 2] + 1
+    u_vertices[:, :, 2, 2] = u_vertices[:, :, 1, 2]
 
-    v_vertices[:, :, 0, 1] = row_helper[:, np.newaxis] * (1 + wall_th)
-    v_vertices[:, :, 3, 1] = v_vertices[:, :, 0, 1]
-    v_vertices[:, :, 1, 1] = v_vertices[:, :, 0, 1] + wall_th
-    v_vertices[:, :, 2, 1] = v_vertices[:, :, 1, 1]
+    v_vertices[:, :, 0, 2] = row_helper[:, np.newaxis] * (1 + wall_th)
+    v_vertices[:, :, 3, 2] = v_vertices[:, :, 0, 2]
+    v_vertices[:, :, 1, 2] = v_vertices[:, :, 0, 2] + wall_th
+    v_vertices[:, :, 2, 2] = v_vertices[:, :, 1, 2]
 
     # faces
     fill = np.array([cols_helper[:-1] * 4, cols_helper[:-1] * 4 + 1, cols_helper[:-1] * 4 + 2])
@@ -85,8 +86,6 @@ def export_local(r, u, v, wall_th, file_name):
     v_faces = r_faces + r_vertices.size // 3
     export_mesh([r_vertices, u_vertices, v_vertices], [r_faces, u_faces, v_faces], file_name)
 
-    print('done')
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # TESTS # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -98,5 +97,4 @@ if __name__ == '__main__':
     r_a = np.random.rand(row_s, col_s)
     u_a = np.random.rand(row_s, col_s + 1)
     v_a = np.random.rand(row_s, col_s)
-    export_local(r_a, u_a, v_a, 0.3, './test.obj')
-    # show_mesh('/home/amir/projects/meshnet/datasets/vase/rp_500/train/0001.obj')
+    ds_to_mesh(r_a, u_a, v_a, 0.3, './test.obj')
