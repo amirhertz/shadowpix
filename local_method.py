@@ -42,4 +42,4 @@ if  __name__ == '__main__':
     path_b = './images/hockney_chairs.jpg'
     path_c = './images/modigliani_women.jpg'
     paths = [path_a, path_b, path_c]
-    local_method(paths, 30, 30, './test.obj')
+    local_method(paths, 100, 30, './test.obj')

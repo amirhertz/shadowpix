@@ -1,26 +1,86 @@
 import numpy as np
-import trimesh
+# from mayavi import mlab
 
 
-def export_mesh(vertices_groups, faces_groups, file):
+def reshape_array(arrays_group):
+    for np_array in arrays_group:
+        np_array.shape = (np_array.size // 3, 3)
+    return np.concatenate(arrays_group, axis=0)
+
+
+def export_mesh(vertices, faces, file):
+    faces += 1
     with open(file, 'w+') as f:
-        for v_group in vertices_groups:
-            v_group.shape = (v_group.size // 3, 3)
-            for v in v_group:
-                f.write("v %f %f %f\n" % (v[0], v[1], v[2]))
-        for f_group in faces_groups:
-            f_group.shape = (f_group.size // 3, 3)
-            f_group += 1
-            for face in f_group:
-                f.write("f %d %d %d\n" % (face[0], face[1], face[2]))
+        for v in vertices:
+            f.write("v %f %f %f\n" % (v[0], v[1], v[2]))
+        for face in faces:
+            f.write("f %d %d %d\n" % (face[0], face[1], face[2]))
     # show_mesh(file)
 
 
-def show_mesh(file):
-    mesh = trimesh.load_mesh(file)
-    # for facet in mesh.facets:
-    #     mesh.visual.face_colors[facet] = trimesh.visual.random_color()
-    mesh.show()
+def side_surface(top_ind, bottom_ind, middle_ind):
+    if middle_ind[0] is None:
+        if middle_ind[1] is None:
+            return [[top_ind[0], top_ind[1], bottom_ind[1]], [top_ind[0], bottom_ind[1], bottom_ind[0]]]
+        else:
+            return [[top_ind[0], top_ind[1], middle_ind[1]], [top_ind[0], middle_ind[1], bottom_ind[0]],
+                    [middle_ind[1], bottom_ind[1], bottom_ind[0]]]
+    else:
+        if middle_ind[1] is None:
+            return [[top_ind[0], top_ind[1], middle_ind[0]], [top_ind[1], bottom_ind[1], middle_ind[0]],
+                    [middle_ind[0], bottom_ind[1], bottom_ind[0]]]
+        else:
+            return [[top_ind[0], top_ind[1], middle_ind[0]], [top_ind[1], middle_ind[1], middle_ind[0]],
+                    [middle_ind[0], middle_ind[1], bottom_ind[0]], [middle_ind[1], bottom_ind[1], bottom_ind[0]]]
+
+
+def get_side_faces(vertices, r_faces, u_faces, v_faces):
+    side_faces = []
+    for row_id, row in enumerate(u_faces):
+        for element_id, u_element in enumerate(row):
+            if element_id < len(row) - 1:
+                top_ind = [u_element[1, 2], u_element[1, 1]]
+                bottom_ind = [r_faces[row_id, element_id, 0, 0], r_faces[row_id, element_id, 0, 1]]
+                middle_ind = [v_faces[row_id, element_id, 0, 1], None]
+                if row_id < len(u_faces) - 1:
+                    middle_ind[1] = v_faces[row_id + 1, element_id, 0, 0]
+                for i in range(2):
+                    if middle_ind[i] is not None and vertices[middle_ind[i], 1] > vertices[top_ind[i], 1]:
+                        middle_ind[i] = None
+                side_faces += side_surface(top_ind, bottom_ind, middle_ind)
+            if element_id != 0:
+                top_ind = [u_element[0, 1], u_element[0, 0]]
+                bottom_ind = [r_faces[row_id, element_id - 1, 1, 1], r_faces[row_id, element_id - 1, 1, 2]]
+                middle_ind = [None, v_faces[row_id, element_id - 1, 1, 1]]
+                if row_id < len(u_faces) - 1:
+                    middle_ind[0] = v_faces[row_id + 1, element_id - 1, 1, 2]
+                for i in range(2):
+                    if middle_ind[i] is not None and vertices[middle_ind[i], 1] > vertices[top_ind[i], 1]:
+                        middle_ind[i] = None
+                side_faces += side_surface(top_ind, bottom_ind, middle_ind)
+    for row_id, row in enumerate(v_faces):
+        for element_id, v_element in enumerate(row):
+            top_ind = [v_element[0, 2], v_element[0, 1]]
+            bottom_ind = [r_faces[row_id, element_id, 1, 2], r_faces[row_id, element_id, 1, 0]]
+            middle_ind = [u_faces[row_id, element_id + 1, 0, 0], u_faces[row_id, element_id, 1, 2]]
+            for i in range(2):
+                if middle_ind[i] is not None and vertices[middle_ind[i], 1] > vertices[top_ind[i], 1]:
+                    middle_ind[i] = None
+            side_faces += side_surface(top_ind, bottom_ind, middle_ind)
+            if row_id != 0:
+                top_ind = [v_element[1, 0], v_element[1, 2]]
+                bottom_ind = [r_faces[row_id - 1, element_id, 0, 1], r_faces[row_id - 1, element_id, 0, 2]]
+                middle_ind = [u_faces[row_id - 1, element_id, 0, 2], u_faces[row_id - 1, element_id + 1, 0, 1]]
+                for i in range(2):
+                    if middle_ind[i] is not None and vertices[middle_ind[i], 1] > vertices[top_ind[i], 1]:
+                        middle_ind[i] = None
+                side_faces += side_surface(top_ind, bottom_ind, middle_ind)
+    return side_faces
+
+
+# def show_mesh(vs, fs):
+#     s = mlab.triangular_mesh(vs[:, 0], vs[:, 2], vs[:, 1], fs, color=(1, 1, 1))
+#     mlab.show()
 
 
 def ds_to_mesh(r, u, v, wall_th, file_name):
@@ -84,7 +144,11 @@ def ds_to_mesh(r, u, v, wall_th, file_name):
     u_faces[:, :, 1, :] = np.transpose(fill)[np.newaxis, :, :]
     u_faces += (row_helper * cols * 4)[:, np.newaxis, np.newaxis, np.newaxis] + (v_vertices.size + r_vertices.size) // 3
     v_faces = r_faces + r_vertices.size // 3
-    export_mesh([r_vertices, u_vertices, v_vertices], [r_faces, u_faces, v_faces], file_name)
+    vertices = reshape_array([r_vertices, v_vertices, u_vertices])
+    side_faces = np.array(get_side_faces(vertices, r_faces, u_faces, v_faces), dtype=np.uint32)
+    faces = reshape_array([r_faces, u_faces, v_faces, side_faces])
+    # show_mesh(vertices, faces)
+    export_mesh(vertices, faces, file_name)
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # TESTS # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -92,9 +156,9 @@ def ds_to_mesh(r, u, v, wall_th, file_name):
 
 
 if __name__ == '__main__':
-    col_s = 100
-    row_s = 100
+    col_s = 8
+    row_s = 6
     r_a = np.random.rand(row_s, col_s)
-    u_a = np.random.rand(row_s, col_s + 1)
-    v_a = np.random.rand(row_s, col_s)
-    ds_to_mesh(r_a, u_a, v_a, 0.3, './test.obj')
+    u_a = np.random.rand(row_s, col_s + 1) + 1
+    v_a = np.random.rand(row_s, col_s) + 1
+    ds_to_mesh(r_a, u_a, v_a, 0.1, './test.obj')
