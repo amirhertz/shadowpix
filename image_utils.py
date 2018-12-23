@@ -46,7 +46,7 @@ def show_image(image):
     plt.show(block=True)
 
 
-def apply_filter(kernel, *images):
+def apply_filter(kernel, images):
     return [convolve(image, kernel) for image in images]
 
 
