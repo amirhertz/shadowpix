@@ -1,6 +1,16 @@
 from PIL import Image
+import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.ndimage.filters import convolve
+
+GRADIENT_KERNEL = np.array([[-1, -1, -1],
+                            [-1, 8, -1],
+                            [-1, -1, -1]])
+x = cv2.getGaussianKernel(5, 1)
+GAUSSIAN_KERNEL = np.dot(x,x.T)
+
+BOTH_KERNELS = convolve(GAUSSIAN_KERNEL, GRADIENT_KERNEL)
 
 
 def load_images(size, *paths):
@@ -18,10 +28,17 @@ def load_image(path, size):
         h_0 = (h - w) // 2
         h -= h_0
     image = image.crop((w_0, h_0, w, h)).resize((size, size), Image.ANTIALIAS)
-    return 1- np.array(image).astype(np.float) / 255
+    return np.array(image) / 255
+
+
+def squared_error(mat_a, mat_b):
+    return np.square(mat_a - mat_b).sum()
 
 
 def show_image(image):
+    image = np.clip(image, 0, 1)
+    if image.shape[0] == 1:
+        image.shape = image.shape[1:]
     if len(image.shape) < 3:
         image = np.expand_dims(image,2)
         image = np.repeat(image, 3, 2)
@@ -29,12 +46,21 @@ def show_image(image):
     plt.show(block=True)
 
 
+def apply_filter(kernel, *images):
+    return [convolve(image, kernel) for image in images]
+
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # TESTS # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
-if  __name__ == '__main__':
+if __name__ == '__main__':
     path_a = './images/hopper_gas.jpg'
-    im_a = load_image(path_a, 100)
-    show_image(im_a)
+    im_a = load_image(path_a, 50)
+    im_gr = apply_filter(GAUSSIAN_KERNEL, im_a)[0]
+    im_gr = apply_filter(GRADIENT_KERNEL, im_gr)[0]
+    im_gr_2 = apply_filter(BOTH_KERNELS, im_a)
+
+    show_image(im_gr)
+    show_image(im_gr_2)
