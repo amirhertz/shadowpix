@@ -47,7 +47,8 @@ def show_image(image):
 
 
 def apply_filter(kernel, images):
-    return [convolve(image, kernel) for image in images]
+    filtered =  [convolve(image, kernel) for image in images]
+    return [np.clip(image, 0, 1) for image in filtered]
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
