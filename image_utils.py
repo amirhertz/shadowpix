@@ -51,6 +51,15 @@ def apply_filter(kernel, images):
     return [np.clip(image, 0, 1) for image in filtered]
 
 
+def save_image(image, path):
+    image = np.clip(image, 0, 1)
+    if image.shape[0] == 1:
+        image.shape = image.shape[1:]
+    if len(image.shape) < 3:
+        image = np.expand_dims(image,2)
+        image = np.repeat(image, 3, 2)
+
+    plt.imsave(path, image)
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # TESTS # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
