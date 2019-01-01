@@ -2,6 +2,7 @@ from image_utils import *
 import numpy as np
 import pickle
 import os
+from mesh_utils import heightfield_to_mesh
 
 class GlobalMethod:
     def __init__(self, images_paths, image_size, w_g, w_s):
@@ -157,8 +158,9 @@ class GlobalMethod:
 
     def export_mesh(self, path, light_angle):
         s = 1 / np.tan(light_angle * np.pi / 180)
-        heigt_field = self.height_field * s
-        # export_height_field(heigt_field, path)
+        height_field = self.height_field * s
+        height_field -= height_field.min()
+        heightfield_to_mesh(height_field, path)
 
 
 def global_method():
@@ -168,9 +170,10 @@ def global_method():
     path_d = './images/miro.jpg'
     paths = [path_a, path_b, path_c, path_d]
     GBM = GlobalMethod(paths, 200, .1, .1)
-    # GBM.optimize(100000, 'global_test')
-    # GBM.export_data('global_test')
-    GBM.load_data('global_test1')
+    GBM.optimize(1000000, 'global_test')
+    GBM.export_data('global_test')
+    # GBM.load_data('global_test1')
+    # GBM.export_mesh('global_test1.obj', 60)
 
 
 if __name__ == '__main__':

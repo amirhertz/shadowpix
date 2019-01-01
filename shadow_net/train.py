@@ -2,6 +2,7 @@ from shadow_net.networks import *
 from image_utils import *
 from shadow_net.heightfield_loss import *
 import torch
+from torch.autograd import Variable
 
 
 def load():
@@ -19,15 +20,23 @@ def run():
     optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
     epochs = 10
     loss_func = HFLoss(64, 10, 0)
+    # loss_func = torch.nn.MSELoss()
     raw_images = load()
-    for _ in range(epochs):
-        images = torch.stack([torch.from_numpy(image).unsqueeze(0) for image in raw_images], 0)
+    for epoch in range(epochs):
+        # images = torch.stack([torch.from_numpy(image).unsqueeze(0) for image in raw_images], 0)
+        images = Variable(torch.stack([torch.from_numpy(image).unsqueeze(0) for image in raw_images], 0), requires_grad=True)
         heightfield = net(images)
-        loss = loss_func(images, heightfield)
+        loss, compare_heights, unroll_heights, heightfield_padded = loss_func(images, heightfield)
+        # loss = loss_func(heightfield / 2, heightfield)
         optimizer.zero_grad()
         loss.backward()
+        for p in net.parameters():
+            x = p
+            print('')
         optimizer.step()
         print(loss.item())
+        if (epoch + 1) % 10 == 0:
+            view_heightfield(heightfield)
 
 
 def view_heightfield(heightfield):

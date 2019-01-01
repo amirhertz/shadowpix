@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+from torch.autograd import Variable
 
 class H2I(nn.Module):
     
@@ -20,9 +20,23 @@ class H2I(nn.Module):
     def forward(self, heightfield):
         heightfield_padded = self.padding(heightfield)
         unroll_heights = heightfield_padded[:, :, :, self.selecting_matrix] - self.buffer_vector
-        compare_heights, _ = unroll_heights.max(dim=4)
+        unroll_heights2 = heightfield_padded.index_select(3, self.selecting_matrix.view(-1)).view(*heightfield.size(), self.radius) - self.buffer_vector
+        assert (unroll_heights == unroll_heights2).all()
+        compare_heights, _ = unroll_heights2.max(dim=4)
         image = 1 - torch.clamp(compare_heights - heightfield, 0, 1)
-        return image
+        # image = compare_heights - heightfield
+        return image, compare_heights, None, heightfield_padded
+
+    # def naive(self, heightfield):
+    #     heightfield_padded = self.padding(heightfield)
+    #     for row_id in range(64):
+    #         for col_id in range(64):
+    #             cur_block = heightfield.index_select(heightfield, torch.arange(col_id, min(col_id + 10, 64)))
+    #     unroll_heights = heightfield_padded[:, :, :, self.selecting_matrix] - self.buffer_vector
+    #     compare_heights, _ = unroll_heights.max(dim=4)
+    #     # image = 1 - torch.relu(torch.tanh(compare_heights - heightfield))
+    #     image = 1 - torch.clamp(compare_heights - heightfield, 0, 1)
+    #     return image
 
 
 class HFLoss:
@@ -34,28 +48,29 @@ class HFLoss:
         self.zeros = torch.zeros(1, 1, im_size, im_size)
 
     def __call__(self, real_images, heightfield):
-        loss = 0
+        loss = Variable(torch.zeros(1,1, requires_grad=True))
         shape = real_images.shape
         real_images = real_images.view(shape[0] // heightfield.shape[0], -1, *shape[1:])
         for i in range(len(real_images)):
             rot_img = real_images[i]
             rot_heightfield = heightfield
             if i == 1:
-                rot_img = rot_img.transpose(1,2).flip(2)
-                rot_heightfield = rot_heightfield.transpose(1,2).flip(2)
+                rot_img = rot_img.transpose(2,3).flip(3)
+                rot_heightfield = rot_heightfield.transpose(2,3).flip(3)
             elif i == 2:
-                rot_img = rot_img.flip(2)
-                rot_heightfield = rot_heightfield.flip(2)
+                rot_img = rot_img.flip(3)
+                rot_heightfield = rot_heightfield.flip(3)
             elif i==3:
-                rot_img = rot_img.transpose(1, 2).flip(1)
-                rot_heightfield = rot_heightfield.transpose(1, 2).flip(1)
+                rot_img = rot_img.transpose(2, 3).flip(2)
+                rot_heightfield = rot_heightfield.transpose(2, 3).flip(2)
             assert i < 4, 'Each heightfield holds up to 4 images but %d were given' % len(real_images)
-            heightfield_result = self.h2i(rot_heightfield)
-            loss += self.mse(heightfield_result, rot_img)
+            heightfield_result, compare_heights, unroll_heights, heightfield_padded = self.h2i(rot_heightfield)
+            # heightfield_result = heightfield
+            loss += self.mse(heightfield_result, heightfield_result*2)
         if self.gamma:
             zeros = self.zeros.expand(heightfield.shape)
             loss += self.gamma * self.mse(self.gradient_conv(heightfield), zeros)
-        return loss
+        return loss, compare_heights, unroll_heights, heightfield_padded
 
     @staticmethod
     def init_grad_conv():
