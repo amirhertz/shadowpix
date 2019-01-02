@@ -35,7 +35,7 @@ def run(running_path):
 
     last_loss = None
     for epoch in range(epochs):
-        tqdm_obj = tqdm(total=len(data) // (4*batch_size), desc='Training Shadow network. epoch: {}/{}'.format(epoch, epochs))
+        tqdm_obj = tqdm(total=len(data) // 4, desc='Training Shadow network. epoch: {}/{}'.format(epoch, epochs))
         batch_ind = 1
         for batch in data_loader:
             batch.requires_grad = True
@@ -59,7 +59,7 @@ def run(running_path):
                 last_loss = loss
 
             tqdm_obj.set_postfix(loss=loss.item(), improvement = last_loss.item() - loss.item())
-            tqdm_obj.update()
+            tqdm_obj.update(batch_size)
 
             last_loss = loss
 
