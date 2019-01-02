@@ -108,3 +108,6 @@ venv.bak/
 models/
 *.obj
 *.blend
+*.jpg
+*.zip
+*.pkl

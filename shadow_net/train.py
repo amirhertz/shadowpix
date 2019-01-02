@@ -6,6 +6,8 @@ import torchvision
 from shadow_net.data_loader import DataLoader
 import sys
 import os
+from tqdm import tqdm
+from torch.autograd import Variable
 
 
 def load():
@@ -20,31 +22,55 @@ def load():
 
 def run(running_path):
     k = 4
+    batch_size = 10
     data = DataLoader(os.path.join(running_path, '../../', 'gray_celebA/'), k)
-    data_loader = torch.utils.data.DataLoader(data, batch_size=1, shuffle=True)
-
+    data_loader = torch.utils.data.DataLoader(data, batch_size=batch_size, shuffle=True)
 
     net = EncoderDecoder(Encoder, Decoder, k)
+    net = init_net(net)
     optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
-    epochs = 10
+    epochs = 10000
     loss_func = HFLoss(64, 10, 0)
     # raw_images = load()
+
+    last_loss = None
     for epoch in range(epochs):
-        batch_ind = 0
+        tqdm_obj = tqdm(total=len(data) // (4*batch_size), desc='Training Shadow network. epoch: {}/{}'.format(epoch, epochs))
+        batch_ind = 1
         for batch in data_loader:
+            batch.requires_grad = True
             batch_ind += 1
-            # images = torch.stack([torch.from_numpy(image).unsqueeze(0) for image in raw_images], 0)
-            heightfield = net(batch.squeeze(0))
-            loss = loss_func(batch.squeeze(0), heightfield)
+            # images = Variable(torch.stack([torch.from_numpy(image).unsqueeze(0) for image in raw_images], 0),
+            #                   requires_grad=True)
+
+            # heightfield = net(images)
+            heightfield = net(batch)
+            loss = loss_func(batch, heightfield)
             optimizer.zero_grad()
             loss.backward()
+
+
+            # for p in net.parameters():
+            #     x = p
+
             optimizer.step()
-            print('{}/{}: {}'.format(epoch, batch_ind, loss.item()))
+
+            if last_loss is None:
+                last_loss = loss
+
+            tqdm_obj.set_postfix(loss=loss.item(), improvement = last_loss.item() - loss.item())
+            tqdm_obj.update()
+
+            last_loss = loss
+
+            # print('{}/{}: {}'.format(epoch, batch_ind, loss.item()))
+
+
 
             if batch_ind % 100:
                 save_heightfield(heightfield, os.path.join(running_path, '..', 'heightfields/heightfield_latest.png'))
 
-        save_heightfield(heightfield, os.path.join(running_path, '..', 'heightfields/heightfield_.png'.format(epoch)))
+        save_heightfield(heightfield, os.path.join(running_path, '..', 'heightfields/heightfield_{}.png'.format(epoch)))
 
 
 def save_heightfield(heightfield, path):
