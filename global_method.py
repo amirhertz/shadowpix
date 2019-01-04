@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from image_utils import *
 import numpy as np
 import pickle
@@ -18,11 +20,11 @@ class GlobalMethod:
         self.alpha = 0
         self.w_g = w_g
         self.w_s = w_s
-        self.radius = 10
+        self.radius = 20
         self.value = self.objective(self.height_field_images)
-        self.buffer_vector = np.arange(0, self.radius)
+        self.buffer_vector = np.arange(0, self.radius) + 1
         selecting_matrix = np.expand_dims(np.arange(0, self.size), axis=1)
-        self.selecting_matrix = selecting_matrix + self.buffer_vector + 1
+        self.selecting_matrix = selecting_matrix + self.buffer_vector
 
     def calculate_update(self, row, col):
         update_images = self.height_field_images.copy()
@@ -36,7 +38,7 @@ class GlobalMethod:
             else:
                 to_compare = np.flip(self.height_field[:, col], 0)
             height_select = np.pad(to_compare, (0, self.radius), 'constant', constant_values=(0, -10000))
-            compare_values = height_select[self.selecting_matrix]
+            compare_values = height_select[self.selecting_matrix] - self.buffer_vector
             compare_values = np.max(compare_values, axis=1)
             mask_image =  1 - (to_compare < compare_values).astype(np.float64)
             if i % 2 == 1:
@@ -53,9 +55,10 @@ class GlobalMethod:
         height_field_image_both = apply_filter(BOTH_KERNELS, height_field_images)
         value = 0
         for idx, image in enumerate(self.raw_images):
-            value += squared_error(image, height_field_image_smooth[idx])
-            value += self.w_g * squared_error(self.gp_images[idx], height_field_image_both[idx])
-        value += self.w_s * squared_error(height_field_gradient, 0)
+            value += (1-self.w_g) * squared_error(image, height_field_image_smooth[idx]) / (self.size * self.size)
+            value += self.w_g * squared_error(self.gp_images[idx], height_field_image_both[idx]) / (self.size * self.size)
+        value /= len(self.raw_images)
+        # value += self.w_s * squared_error(height_field_gradient, 0)
         return value
 
     def export_data(self, name):
@@ -92,7 +95,7 @@ class GlobalMethod:
                 profit = self.value - new_value
                 # if profit < 0:
                 #     print('prob is: ' + str(np.e**(profit / self.T )))
-                if profit > 0 or np.random.random() < np.e**(profit / self.T):
+                if profit > 0:  # or np.random.random() < np.e**(profit / self.T):
                     self.T -= self.alpha
                     self.height_field_images = updated_images
                     self.value = new_value
@@ -121,7 +124,7 @@ class GlobalMethod:
             if (i + 1) % 5000 == 0:
                 self.export_data(name)
                 print("checkpointing")
-            if (i) % 100 == 0:
+            if (i) % 1000 == 0:
                 if value > 0:
                     print("Objective value after %d steps is %.3f" % (i +1, value))
                 else:
@@ -156,24 +159,25 @@ class GlobalMethod:
         #             return False
         # return True
 
-    def export_mesh(self, path, light_angle):
+    def export_mesh(self, name, light_angle):
         s = 1 / np.tan(light_angle * np.pi / 180)
         height_field = self.height_field * s
         height_field -= height_field.min()
-        heightfield_to_mesh(height_field, path)
+        heightfield_to_mesh(height_field, './models/%s.obj' % name)
 
 
 def global_method():
-    path_a = './images/hopper_gas.jpg'
-    path_b = './images/hockney_chairs.jpg'
+    path_a = './images/hockney.jpg'
+    path_b = './images/cezanne.jpg'
     path_c = './images/modigliani_women.jpg'
     path_d = './images/miro.jpg'
+    train_name = 'global_paintings_400'
+
     paths = [path_a, path_b, path_c, path_d]
-    GBM = GlobalMethod(paths, 200, .1, .1)
-    GBM.optimize(1000000, 'global_test')
-    GBM.export_data('global_test')
-    # GBM.load_data('global_test1')
-    # GBM.export_mesh('global_test1.obj', 60)
+    GBM = GlobalMethod(paths, 400, .2, .1)
+    GBM.optimize(1000000, train_name)
+    # GBM.load_data(train_name)
+    # GBM.export_mesh(train_name, 60)
 
 
 if __name__ == '__main__':

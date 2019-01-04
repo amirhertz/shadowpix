@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.ndimage.filters import convolve
+import os
 
 GRADIENT_KERNEL = np.array([[-1, -1, -1],
                             [-1, 8, -1],
@@ -46,9 +47,25 @@ def show_image(image):
     plt.show(block=True)
 
 
+def save_image(image, path):
+    image = np.clip(image, 0, 1)
+    img = Image.fromarray(np.uint8(image * 255), 'L')
+    img.save(path)
+
+
 def apply_filter(kernel, images):
     filtered =  [convolve(image, kernel) for image in images]
     return [np.clip(image, 0, 1) for image in filtered]
+
+def save_bw(input_dir, output_dir):
+    for root, _, files in os.walk(input_dir):
+        for file in files:
+            file_name, file_extension = os.path.splitext(file)
+            if file_extension == '.jpg' or file_extension == '.jpeg' or file_extension == '.png':
+                input_file = os.path.join(root, file)
+                output_file = os.path.join(output_dir, file_name + '.jpg')
+                image = load_image(input_file, 200)
+                save_image(image, output_file)
 
 
 def save_image(image, path):
@@ -66,11 +83,5 @@ def save_image(image, path):
 
 
 if __name__ == '__main__':
-    path_a = './images/hopper_gas.jpg'
-    im_a = load_image(path_a, 50)
-    im_gr = apply_filter(GAUSSIAN_KERNEL, im_a)[0]
-    im_gr = apply_filter(GRADIENT_KERNEL, im_gr)[0]
-    im_gr_2 = apply_filter(BOTH_KERNELS, im_a)
+    save_bw('./images', './images_bw')
 
-    show_image(im_gr)
-    show_image(im_gr_2)

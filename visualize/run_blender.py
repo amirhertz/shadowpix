@@ -74,5 +74,5 @@ def create_gif(base_name):
 
 if __name__ == "__main__":
     opt.gif_frames = 20
-    create_gif('mies')
+    create_gif('paintings_new')
     # render(opt.input_folder, opt.output_folder)
