@@ -34,18 +34,3 @@ def local_method(images_paths, image_size, light_angle, output_file):
     ds_to_mesh(r, u, v, 0.1, output_file)
     print('done')
 
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # TESTS # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-
-if  __name__ == '__main__':
-    # path_a = './images/hopper_gas.jpg'
-    # path_b = './images/hockney_chairs.jpg'
-    # path_c = './images/modigliani_women.jpg'
-    path_a = './images/lafayette_park.jpg'
-    path_b = './images/lake_shore.jpg'
-    path_c = './images/iit.jpg'
-    paths = [path_a, path_b, path_c]
-    local_method(paths, 200, 60, './models/buildings.obj')

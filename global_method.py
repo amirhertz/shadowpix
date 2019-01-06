@@ -191,8 +191,8 @@ class GlobalMethod:
                 self.heightfield[0, 0, row, col] -= delta
         return -1
 
-    def optimize(self, steps, name, temprature=0.001):
-        self.T = temprature
+    def optimize(self, steps, name, temperature=0.001):
+        self.T = temperature
         min_t = 0
         failed_counter = 0
         self.alpha = (self.T - min_t) / steps
@@ -255,12 +255,12 @@ def global_method():
     path_b = './images/celeb_b.jpg'
     path_c = './images/celeb_c.jpg'
     # path_d = './images/roy_c.jpg'
-    train_name = 'global_celebs_gpu'
+    train_name = 'global_roy2_gpu'
     paths = [path_a, path_b, path_c]
     gbm = GlobalMethod(paths, 400, 0, 0, radius=20, device=torch.device('cuda:0'))
-    gbm.optimize(10000000, train_name, temprature=0)
-    # gbm.load_data(train_name)
-    # gbm.export_mesh(train_name, 60)
+    # gbm.optimize(10000000, train_name, temprature=0)
+    gbm.load_data(train_name)
+    gbm.export_mesh(train_name, 60)
 
 
 if __name__ == '__main__':

@@ -38,19 +38,20 @@ def render(input_obj_dir, output_folder):
         if return_code != 0:
             print('Rendering command (\"%s\") failed' % (command[idx]))
     if opt.gif_frames > 1:
-        create_gif(file_id)
+        create_gif_local(file_id)
     print('done!')
 
 
 def alpha_to_color(file_name, color=(255, 255, 255)):
     png = Image.open(file_name)
-    png.load()
-    background = Image.new("RGB", png.size, (255, 255, 255))
-    background.paste(png, mask=png.split()[3])  # 3 is the alpha channel
-    background.save(file_name)
+    if len(png.getpixel((0,0))) == 4:
+        png.load()
+        background = Image.new("RGB", png.size, (255, 255, 255))
+        background.paste(png, mask=png.split()[3])  # 3 is the alpha channel
+        background.save(file_name)
 
 
-def create_gif(base_name):
+def create_gif_local(base_name):
     images = []
     durations = []
     for i in range(opt.gif_frames):
@@ -72,7 +73,21 @@ def create_gif(base_name):
     imageio.mimsave('%s/%s_anim.gif' % (opt.output_folder, base_name), images, duration=durations)
 
 
+def create_gif_global(base_name):
+    images = []
+    durations = []
+    for i in range(opt.gif_frames):
+        file_name = '%s/%s_%d.png' % (opt.output_folder, base_name, i)
+        alpha_to_color(file_name)
+        if i % (opt.gif_frames / 4) == 0:
+            durations.append(1.5)
+        else:
+            durations.append(0.3)
+        images.append(imageio.imread(file_name))
+    imageio.mimsave('%s/%s_anim.gif' % (opt.output_folder, base_name), images, duration=durations)
+
+
 if __name__ == "__main__":
-    opt.gif_frames = 20
-    create_gif('paintings_new')
+    opt.gif_frames = 40
+    create_gif_global('global_paintings')
     # render(opt.input_folder, opt.output_folder)

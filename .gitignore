@@ -105,11 +105,15 @@ venv.bak/
 
 .idea/
 
+data/
 models/
+
 *.obj
-*.blend
-*.jpg
 *.zip
 *.pkl
+*.png
+*.gifgit a
 *.blend
 *.blend1
+
+
