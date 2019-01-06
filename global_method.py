@@ -4,7 +4,7 @@ from image_utils import *
 import numpy as np
 import pickle
 import os
-from mesh_utils import heightfield_to_mesh
+from mesh_utils import heightfield_to_mesh, init_folder
 import torch
 from torch import nn
 
@@ -80,6 +80,7 @@ class GlobalMethod:
         return value
 
     def export_data(self, name):
+        init_folder(name)
         untype = ["<class 'builtin_function_or_method'>", "<class 'method'>", "<class 'method-wrapper'>",
                   "<class 'type'>", "<class 'NoneType'>", "<class 'dict'>", "<class 'str'>", "<class 'function'>"]
         d = {}
@@ -90,17 +91,17 @@ class GlobalMethod:
                 if hasattr(x, 'device'):
                     x = x.cpu()
                 d[att] = x
-        d_path = './data/%s.pkl' % name
-        print("checkpointing %s" % name)
+        d_path = '%s.pkl' % name
+        print("checkpointing %s.pkl" % name)
         with open(d_path, 'wb') as f:
             pickle.dump(d, f, pickle.HIGHEST_PROTOCOL)
 
     def load_data(self, name):
-        d_path = './data/%s.pkl' % name
+        d_path = '%s.pkl' % name
         if not os.path.isfile(d_path):
             print("data file- %s is not exist" % name)
             return
-        print("Loading %s" % name)
+        add
         with open(d_path, 'rb') as f:
             d = pickle.load(f)
             for att in d:
@@ -164,7 +165,7 @@ class GlobalMethod:
         s = 1 / np.tan(light_angle * np.pi / 180)
         height_field = self.heightfield.cpu().squeeze(0).squeeze(0).numpy() * s
         height_field -= height_field.min()
-        heightfield_to_mesh(height_field, './models/%s.obj' % name)
+        heightfield_to_mesh(height_field, '%s.obj' % name)
 
     def step(self):
         for _ in range(self.size * self.size):
@@ -178,8 +179,6 @@ class GlobalMethod:
                 updated_images = self.calculate_update(row, col)
                 new_value = self.objective(updated_images)
                 profit = (self.value - new_value) * 100
-                # if profit < 0:
-                #     print('prob is: ' + str(np.e**(profit / self.T).item()))
                 if profit > 0 or (self.T > 0 and np.random.random() < np.e**(profit / self.T)):
                     self.T -= self.alpha
                     self.heightfield_images = updated_images
@@ -205,8 +204,7 @@ class GlobalMethod:
                     break
             else:
                 failed_counter = 0
-
-            if (i + 1) % 5000 == 0:
+            if (i + 1) % 100 == 0:
                 self.export_data(name)
             if i % 1000 == 0:
                 if value > 0:
@@ -248,20 +246,3 @@ class GlobalMethod:
         def apply_smooth_filter(images):
             return torch.clamp(conv(images), 0, 1)
         return apply_smooth_filter
-
-
-def global_method():
-    path_a = './images/celeb_a.jpg'
-    path_b = './images/celeb_b.jpg'
-    path_c = './images/celeb_c.jpg'
-    # path_d = './images/roy_c.jpg'
-    train_name = 'global_roy2_gpu'
-    paths = [path_a, path_b, path_c]
-    gbm = GlobalMethod(paths, 400, 0, 0, radius=20, device=torch.device('cuda:0'))
-    # gbm.optimize(10000000, train_name, temprature=0)
-    gbm.load_data(train_name)
-    gbm.export_mesh(train_name, 60)
-
-
-if __name__ == '__main__':
-    global_method()

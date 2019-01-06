@@ -4,9 +4,9 @@ from global_method import GlobalMethod
 # path params
 path_a = '../images/roy_a.jpg'
 path_b = '../images/roy_b.jpg'
-path_c = '../images/roy.jpg'
-path_d = '../images/roy_c.jpg'
-output_name = 'lichtenstein'
+path_c = '../images/roy_c.jpg'
+path_d = '../images/roy_d.jpg'
+output_name = '../models/lichtenstein'
 
 
 # object params

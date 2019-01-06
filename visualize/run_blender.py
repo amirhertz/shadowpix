@@ -80,14 +80,13 @@ def create_gif_global(base_name):
         file_name = '%s/%s_%d.png' % (opt.output_folder, base_name, i)
         alpha_to_color(file_name)
         if i % (opt.gif_frames / 4) == 0:
-            durations.append(1.5)
+            durations.append(2)
         else:
-            durations.append(0.3)
+            durations.append(0.4)
         images.append(imageio.imread(file_name))
     imageio.mimsave('%s/%s_anim.gif' % (opt.output_folder, base_name), images, duration=durations)
 
 
 if __name__ == "__main__":
     opt.gif_frames = 40
-    create_gif_global('global_paintings')
-    # render(opt.input_folder, opt.output_folder)
+    create_gif_global('lichtenstein')

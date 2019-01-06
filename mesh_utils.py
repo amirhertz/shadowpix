@@ -1,5 +1,5 @@
 import numpy as np
-
+import os
 
 def reshape_array(arrays_group):
     for np_array in arrays_group:
@@ -20,6 +20,8 @@ def export_mesh(vertices, faces, file, center=True, scale=1):
     if scale:
         vertices[:, :] /= (np.max(ranges) / scale)
     faces += 1
+    init_folder(file)
+    print("Exporting %s" % file)
     with open(file, 'w+') as f:
         for v in vertices:
             f.write("v %f %f %f\n" % (v[0], v[1], v[2]))
@@ -318,16 +320,8 @@ def heightfield_to_mesh(heightfield, file_name):
     export_mesh(vertices, faces, file_name)
 
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # TESTS # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+def init_folder(name):
+    folder = os.path.split(name)[0]
+    if folder and not os.path.exists(folder):
+        os.makedirs(folder)
 
-
-if __name__ == '__main__':
-    col_s = 8
-    row_s = 6
-    r_a = np.random.rand(row_s, col_s)
-    u_a = np.random.rand(row_s, col_s + 1) + 1
-    v_a = np.random.rand(row_s, col_s) + 1
-    heightfield_to_mesh(r_a, './test.obj')
-    # ds_to_mesh(r_a, u_a, v_a, 0.1, './test.obj')
