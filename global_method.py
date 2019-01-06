@@ -1,5 +1,3 @@
-import sys
-sys.path.append('../')
 from image_utils import *
 import numpy as np
 import pickle
@@ -101,7 +99,7 @@ class GlobalMethod:
         if not os.path.isfile(d_path):
             print("data file- %s is not exist" % name)
             return
-        add
+        print("Loading %s.pkl" % name)
         with open(d_path, 'rb') as f:
             d = pickle.load(f)
             for att in d:

@@ -25,7 +25,7 @@ device = torch.device('cuda:0')
 
 # initialize the global method and optimize
 paths = [path_a, path_b, path_c, path_d]
-gbm = GlobalMethod(paths, resolution, 0, 0, radius=radius, device=device)
+gbm = GlobalMethod(paths, resolution, w_g, w_s, radius=radius, device=device)
 gbm.optimize(steps, output_name, temperature=temperature)
 
 # load global method state and export to mesh
