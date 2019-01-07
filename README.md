@@ -74,4 +74,4 @@ gbm.optimize(steps, output_name, temperature=temperature)
 gbm.load_data(output_name)
 gbm.export_mesh(output_name, light_angle)
 ```
-<a href="###" style= "cursor: text;"><img style= "cursor: text;" src="http://www.pxcm.org/shadowpix/anim_global_lichtenstein.gif" title="Roy Lichtenstein"></a>
+<a href="###" style= "cursor: text;"><img style= "cursor: text;" src="http://www.pxcm.org/shadowpix/lichtenstein_anim_small.gif" title="Roy Lichtenstein"></a>
