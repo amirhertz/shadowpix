@@ -75,7 +75,7 @@ gbm.load_data(output_name)
 gbm.export_mesh(output_name, light_angle)
 ```
 
-<a href="###" style= "cursor: text;"><img style= "cursor: text;" src="https://github.com/amirhertz/shadowpix/blob/master/renders/lichtenstein_anim_small.gif" title="Roy Lichtenstein"></a>
+<a href="###" style= "cursor: text;"><img style= "cursor: text;" src="https://github.com/amirhertz/shadowpix/blob/master/heightfield_321.png" title="ShadowNet Heightfield example"></a>
 
 To train a new ShadowNet run 
 ```
