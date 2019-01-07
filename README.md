@@ -15,7 +15,7 @@ Our code includes an implementation for:
 The simplest way to create a SHADOWPIX is to follow the example scripts below (found within the examples directory).<br/>
 For a better understating of the different parameters, please refer to the original paper.
 
-#### Local method
+### Local method
 <a href="###" style= "cursor: text;"><img style= "cursor: text;" src="http://www.pxcm.org/shadowpix/local_view_small.png" title="3d local SHDOWPIX object, close view"></a>
 ```python
 from local_method import local_method
@@ -40,7 +40,7 @@ local_method(paths, resolution, light_angle, output_file)
 ```
 
 
-#### Global method
+### Global method
 <a href="###" style= "cursor: text;"><img style= "cursor: text;" src="http://www.pxcm.org/shadowpix/global_view_small.png" title="3d global SHDOWPIX object, close view"></a>
 ```python
 import torch
@@ -74,7 +74,7 @@ gbm.optimize(steps, output_name, temperature=temperature)
 gbm.load_data(output_name)
 gbm.export_mesh(output_name, light_angle)
 ```
-
+### ShadowNet
 <a href="###" style= "cursor: text;"><img style= "cursor: text;" src="https://github.com/amirhertz/shadowpix/blob/master/heightfield_321.png" title="ShadowNet Heightfield example"></a>
 
 To train a new ShadowNet run 
