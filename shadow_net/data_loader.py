@@ -6,19 +6,19 @@ from torchvision.transforms import ToTensor
 def make_dataset(dir):
     images = []
     dir = os.path.expanduser(dir)
-    for target in sorted(os.listdir(dir)):
-        d = os.path.join(dir, target)
-        if not os.path.isdir(d):
-            continue
+    # for target in sorted(os.listdir(dir)):
+    #     d = os.path.join(dir, target)
+        # if not os.path.isdir(d):
+        #     continue
 
-        for root, _, fnames in sorted(os.walk(d)):
-            for fname in sorted(fnames):
-                if not '.jpg' in fname:
-                    continue
+    for root, _, fnames in sorted(os.walk(dir)):
+        for fname in sorted(fnames):
+            if not '.jpg' in fname:
+                continue
 
-                path = os.path.join(root, fname)
-                item = (path)
-                images.append(item)
+            path = os.path.join(root, fname)
+            item = (path)
+            images.append(item)
 
     return images
 
