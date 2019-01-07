@@ -74,4 +74,14 @@ gbm.optimize(steps, output_name, temperature=temperature)
 gbm.load_data(output_name)
 gbm.export_mesh(output_name, light_angle)
 ```
+
 <a href="###" style= "cursor: text;"><img style= "cursor: text;" src="https://github.com/amirhertz/shadowpix/blob/master/renders/lichtenstein_anim_small.gif" title="Roy Lichtenstein"></a>
+
+To train a new ShadowNet run 
+```
+python shadownet_train.py target_folder source_folder
+```
+Where:
+ 
+ 1. The target folder will be created within the project and will hold checkpoints of the model as well as heightfield samples of progress
+ 2. The source folder points to the folder which holds the data for training 
