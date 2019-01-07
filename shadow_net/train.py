@@ -21,12 +21,14 @@ def load():
 
 
 def run(running_path):
+    gpu_id = 3
     k = 4
     batch_size = 10
     data = DataLoader(os.path.join(running_path, '../../', 'gray_celebA/'), k)
     data_loader = torch.utils.data.DataLoader(data, batch_size=batch_size, shuffle=True)
 
     net = EncoderDecoder(Encoder, Decoder, k)
+    net.cuda(gpu_id)
     net = init_net(net)
     optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
     epochs = 10000
@@ -35,9 +37,10 @@ def run(running_path):
 
     last_loss = None
     for epoch in range(epochs):
-        tqdm_obj = tqdm(total=len(data) // 4, desc='Training Shadow network. epoch: {}/{}'.format(epoch, epochs))
+        tqdm_obj = tqdm(total=len(data), desc='Training Shadow network. epoch: {}/{}'.format(epoch, epochs))
         batch_ind = 1
         for batch in data_loader:
+            batch = batch.cuda(gpu_id)
             batch.requires_grad = True
             batch_ind += 1
             # images = Variable(torch.stack([torch.from_numpy(image).unsqueeze(0) for image in raw_images], 0),
@@ -48,7 +51,6 @@ def run(running_path):
             loss = loss_func(batch, heightfield)
             optimizer.zero_grad()
             loss.backward()
-
 
             # for p in net.parameters():
             #     x = p
@@ -65,17 +67,16 @@ def run(running_path):
 
             # print('{}/{}: {}'.format(epoch, batch_ind, loss.item()))
 
-
-
             if batch_ind % 100:
-                save_heightfield(heightfield, os.path.join(running_path, '..', 'heightfields/heightfield_latest.png'))
+                save_heightfield(heightfield, os.path.join(running_path, '..', 'clamped_heightfields/heightfield_latest.png'))
 
-        save_heightfield(heightfield, os.path.join(running_path, '..', 'heightfields/heightfield_{}.png'.format(epoch)))
+        save_heightfield(heightfield, os.path.join(running_path, '..', 'clamped_heightfields/heightfield_{}.png'.format(epoch)))
 
 
 def save_heightfield(heightfield, path):
     heightfield_image = H2I(64, 10)(heightfield).cpu().detach().numpy()
     save_image(heightfield_image[0], path)
+
 
 def view_heightfield(heightfield):
     heightfield_image = H2I(64,10)(heightfield).cpu().detach().numpy()
