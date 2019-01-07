@@ -107,6 +107,7 @@ venv.bak/
 
 data/
 models/
+images_bw/
 
 *.obj
 *.zip
